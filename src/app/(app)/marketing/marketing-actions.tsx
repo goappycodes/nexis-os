@@ -82,7 +82,6 @@ export function MarketingActions({
       <ScriptSheet
         open={open === "script"}
         onClose={() => setOpen(null)}
-        departments={departments}
         approvers={approvers}
         events={events}
         campaigns={campaigns}
@@ -425,7 +424,6 @@ function ScriptSheet({
 }: {
   open: boolean;
   onClose: () => void;
-  departments: Option[];
   approvers: Approver[];
   events: Option[];
   campaigns: Option[];

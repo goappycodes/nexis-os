@@ -25,6 +25,7 @@ export const PRIMARY_NAV: NavItem[] = [
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
+  { href: "/expenses", label: "Expenses", icon: "wallet" },
   { href: "/boards", label: "Boards", icon: "kanban" },
   { href: "/calendar", label: "Calendar", icon: "calendar-range" },
   { href: "/team", label: "Team", icon: "users" },

@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { CalendarDays, MapPin, Plus, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState, Progress, Skeleton } from "@/components/ui/misc";
+import { EmptyState, Progress } from "@/components/ui/misc";
 import { EVENT_STATUS } from "@/lib/constants";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { Event } from "@/lib/types";
@@ -45,9 +44,7 @@ export default async function EventsPage({
         </Link>
       </div>
 
-      <Suspense key={view} fallback={<EventListSkeleton />}>
-        <EventList showPast={showPast} />
-      </Suspense>
+      <EventList showPast={showPast} />
     </div>
   );
 }
@@ -186,12 +183,3 @@ async function EventList({ showPast }: { showPast: boolean }) {
   );
 }
 
-function EventListSkeleton() {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-44 rounded-2xl" />
-      ))}
-    </div>
-  );
-}

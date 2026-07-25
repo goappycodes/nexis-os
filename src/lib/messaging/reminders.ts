@@ -18,6 +18,7 @@ import type { Reminder } from "@/lib/types";
  */
 export const TEMPLATES = {
   taskReminder: "nexisos_task_reminder",
+  taskUrgent: "nexisos_task_urgent",
   taskAssigned: "nexisos_task_assigned",
   approvalPending: "nexisos_approval_pending",
   approvalDecision: "nexisos_approval_decision",
@@ -169,6 +170,85 @@ export async function scheduleDueTaskReminders() {
 
   const { error } = await supabase.from("reminders").insert(rows);
   return { scheduled: error ? 0 : rows.length, error: error?.message };
+}
+
+/**
+ * Escalate work that is overdue, or urgent-priority and due today.
+ *
+ * Separate from the routine day-before nudge on purpose: this uses a visually
+ * distinct template so a genuine escalation does not read like the daily noise.
+ * Re-escalates at most once every 48 hours per task so a stuck item nags
+ * without becoming background static people learn to ignore.
+ */
+export async function scheduleUrgentTaskReminders() {
+  const supabase = createAdminClient();
+
+  const now = new Date();
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const { data } = await supabase
+    .from("tasks")
+    .select("id, title, due_at, assignee_id, priority")
+    .not("assignee_id", "is", null)
+    .not("status", "in", "(done,cancelled)")
+    .lte("due_at", endOfToday.toISOString())
+    .limit(200);
+
+  const tasks = (data ?? []) as unknown as {
+    id: string;
+    title: string;
+    due_at: string;
+    assignee_id: string;
+    priority: string;
+  }[];
+
+  // Overdue at any priority, or urgent and due today.
+  const candidates = tasks.filter(
+    (t) => new Date(t.due_at) < now || t.priority === "urgent"
+  );
+
+  if (!candidates.length) return { escalated: 0 };
+
+  const cutoff = new Date(now.getTime() - 48 * 3600 * 1000).toISOString();
+  const { data: recent } = await supabase
+    .from("reminders")
+    .select("entity_id, user_id")
+    .eq("entity_type", "task")
+    .eq("template", TEMPLATES.taskUrgent)
+    .gte("created_at", cutoff)
+    .in("entity_id", candidates.map((t) => t.id));
+
+  const recentlyNudged = new Set((recent ?? []).map((r) => `${r.entity_id}:${r.user_id}`));
+
+  const rows = candidates
+    .filter((t) => !recentlyNudged.has(`${t.id}:${t.assignee_id}`))
+    .map((task) => {
+      const overdueDays = Math.floor(
+        (now.getTime() - new Date(task.due_at).getTime()) / 86_400_000
+      );
+      const statusLine =
+        overdueDays > 0
+          ? `Overdue by ${overdueDays} ${overdueDays === 1 ? "day" : "days"}`
+          : "Marked urgent, due today";
+
+      return {
+        user_id: task.assignee_id,
+        entity_type: "task",
+        entity_id: task.id,
+        channel: "whatsapp" as const,
+        send_at: now.toISOString(),
+        template: TEMPLATES.taskUrgent,
+        body: `Urgent: "${task.title}" — ${statusLine}.`,
+        payload: { variables: [task.title, formatDate(task.due_at), statusLine] },
+        status: "pending" as const,
+      };
+    });
+
+  if (!rows.length) return { escalated: 0 };
+
+  const { error } = await supabase.from("reminders").insert(rows);
+  return { escalated: error ? 0 : rows.length, error: error?.message };
 }
 
 /**

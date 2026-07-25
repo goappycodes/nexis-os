@@ -1,27 +1,22 @@
 import { requireUser, isManager, isSuperAdmin } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { Sidebar } from "@/components/shell/sidebar";
 import { TopBar } from "@/components/shell/top-bar";
+import { SnakeLoader } from "@/components/shell/snake-loader";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const manager = isManager(user);
   const superAdmin = isSuperAdmin(user);
 
-  // Approval count drives the nav badge — the number the team should be
-  // looking at first thing every morning.
-  const supabase = await createClient();
-  const { count } = await supabase
-    .from("approval_requests")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pending")
-    .eq("assigned_to", user.id);
-
-  const pendingApprovals = count ?? 0;
+  // Comes back with the session in the same round trip — the nav badge is the
+  // number the team should be looking at first thing every morning.
+  const pendingApprovals = user.pendingApprovals;
 
   return (
     <div className="min-h-dvh">
+      <SnakeLoader />
+
       <Sidebar
         isManager={manager}
         isSuperAdmin={superAdmin}

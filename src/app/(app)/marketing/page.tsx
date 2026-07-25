@@ -1,10 +1,9 @@
-import { Suspense } from "react";
 import { Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState, Skeleton } from "@/components/ui/misc";
+import { EmptyState } from "@/components/ui/misc";
 import { APPROVAL_STATUS, CAMPAIGN_STATUS } from "@/lib/constants";
 import { formatMoney, relativeDay } from "@/lib/utils";
 import type { Creative, MarketingCampaign, Profile, Script } from "@/lib/types";
@@ -74,7 +73,6 @@ export default async function MarketingPage({
         <TabLink label="Scripts" tab="scripts" active={tab} month={active} />
       </div>
 
-      <Suspense key={`${active}-${tab}`} fallback={<Skeleton className="h-64 rounded-2xl" />}>
         {tab === "creatives" ? (
           <CreativesTab month={active} />
         ) : tab === "scripts" ? (
@@ -82,7 +80,6 @@ export default async function MarketingPage({
         ) : (
           <CalendarTab month={active} />
         )}
-      </Suspense>
     </div>
   );
 }

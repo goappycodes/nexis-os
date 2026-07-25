@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { ArrowRight, CalendarDays, CheckCircle2, Clock, ListChecks, Plus } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState, SectionTitle, Skeleton } from "@/components/ui/misc";
+import { EmptyState, SectionTitle } from "@/components/ui/misc";
 import { EVENT_STATUS, TASK_PRIORITY } from "@/lib/constants";
 import { cn, daysUntil, formatDate, relativeDay } from "@/lib/utils";
 import type { Task, Event, ApprovalRequest } from "@/lib/types";
@@ -31,21 +30,13 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{firstName}</h1>
       </div>
 
-      <Suspense fallback={<StatsSkeleton />}>
-        <StatsRow userId={user.id} />
-      </Suspense>
+      <StatsRow userId={user.id} />
 
-      <Suspense fallback={<ListSkeleton title="My open work" />}>
-        <MyWork userId={user.id} />
-      </Suspense>
+      <MyWork userId={user.id} />
 
-      <Suspense fallback={<ListSkeleton title="Waiting on me" />}>
-        <WaitingOnMe userId={user.id} />
-      </Suspense>
+      <WaitingOnMe userId={user.id} />
 
-      <Suspense fallback={<ListSkeleton title="Upcoming events" />}>
-        <UpcomingEvents />
-      </Suspense>
+      <UpcomingEvents />
     </div>
   );
 }
@@ -322,23 +313,3 @@ async function UpcomingEvents() {
   );
 }
 
-/* ── Skeletons ────────────────────────────────────────────────────────────── */
-
-function StatsSkeleton() {
-  return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-[92px] rounded-2xl" />
-      ))}
-    </div>
-  );
-}
-
-function ListSkeleton({ title }: { title: string }) {
-  return (
-    <section>
-      <SectionTitle>{title}</SectionTitle>
-      <Skeleton className="h-40 rounded-2xl" />
-    </section>
-  );
-}

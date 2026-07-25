@@ -53,6 +53,19 @@ export const TEMPLATES = [
     ],
   },
   {
+    // Escalation for overdue or urgent-priority work. Kept visually distinct
+    // from the routine reminder so it does not blend into the noise.
+    name: "nexisos_task_urgent",
+    category: "UTILITY",
+    components: [
+      body(
+        "Hi {{1}}, this task needs attention today.\n\n*{{2}}*\nDue: {{3}}\nStatus: {{4}}\n\nOpen Nexis OS to update it or flag a blocker.",
+        ["Ritesh", "Send printables to press", "2 Sept 2026", "Overdue by 3 days"]
+      ),
+      FOOTER,
+    ],
+  },
+  {
     name: "nexisos_task_assigned",
     category: "UTILITY",
     components: [

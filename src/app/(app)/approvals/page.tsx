@@ -1,10 +1,9 @@
-import { Suspense } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser, isManager } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
-import { EmptyState, Skeleton } from "@/components/ui/misc";
-import type { ApprovalRequest, Creative, Profile, Script } from "@/lib/types";
+import { EmptyState } from "@/components/ui/misc";
+import type { ApprovalRequest, Creative, Expense, Profile, Script } from "@/lib/types";
 import { ApprovalCard } from "./approval-card";
 
 export const metadata = { title: "Approvals" };
@@ -27,9 +26,7 @@ export default async function ApprovalsPage({
         <FilterLink label="Decided" value="decided" active={filter} />
       </div>
 
-      <Suspense key={filter} fallback={<Skeleton className="h-64 rounded-2xl" />}>
-        <ApprovalList filter={filter} />
-      </Suspense>
+      <ApprovalList filter={filter} />
     </div>
   );
 }
@@ -110,21 +107,29 @@ async function ApprovalList({ filter }: { filter: string }) {
     );
   }
 
-  // Pull the underlying entities in two batched queries rather than per row.
-  const creativeIds = requests.filter((r) => r.entity_type === "creative").map((r) => r.entity_id);
-  const scriptIds = requests.filter((r) => r.entity_type === "script").map((r) => r.entity_id);
+  // Pull the underlying entities in batched queries rather than per row.
+  const idsOf = (type: string) =>
+    requests.filter((r) => r.entity_type === type).map((r) => r.entity_id);
 
-  const [{ data: creatives }, { data: scripts }] = await Promise.all([
+  const creativeIds = idsOf("creative");
+  const scriptIds = idsOf("script");
+  const expenseIds = idsOf("expense");
+
+  const [{ data: creatives }, { data: scripts }, { data: expenses }] = await Promise.all([
     creativeIds.length
       ? supabase.from("creatives").select("*").in("id", creativeIds)
       : Promise.resolve({ data: [] as Creative[] }),
     scriptIds.length
       ? supabase.from("scripts").select("*").in("id", scriptIds)
       : Promise.resolve({ data: [] as Script[] }),
+    expenseIds.length
+      ? supabase.from("expenses").select("*").in("id", expenseIds)
+      : Promise.resolve({ data: [] as Expense[] }),
   ]);
 
   const creativeMap = new Map((creatives ?? []).map((c) => [c.id, c as Creative]));
   const scriptMap = new Map((scripts ?? []).map((s) => [s.id, s as Script]));
+  const expenseMap = new Map((expenses ?? []).map((e) => [e.id, e as Expense]));
 
   const canDecide = isManager(user);
 
@@ -136,6 +141,7 @@ async function ApprovalList({ filter }: { filter: string }) {
           request={request}
           creative={creativeMap.get(request.entity_id) ?? null}
           script={scriptMap.get(request.entity_id) ?? null}
+          expense={expenseMap.get(request.entity_id) ?? null}
           canDecide={canDecide && request.status === "pending"}
           isOwnSubmission={request.requested_by === user.id}
         />

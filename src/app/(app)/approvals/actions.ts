@@ -8,7 +8,12 @@ import type { ApprovalEntityType, ApprovalStatus } from "@/lib/types";
 
 export type ActionState = { error?: string; ok?: boolean } | undefined;
 
-/** Entity tables that carry their own mirrored `status` column. */
+/**
+ * Entity tables that mirror the approval status onto their own row, so lists
+ * can filter without joining back to approval_requests.
+ *
+ * Creatives and scripts also carry a version; expenses do not.
+ */
 const ENTITY_TABLE: Partial<Record<ApprovalEntityType, "creatives" | "scripts">> = {
   creative: "creatives",
   script: "scripts",
@@ -67,6 +72,8 @@ export async function submitForApproval({
   const table = ENTITY_TABLE[entityType];
   if (table) {
     await supabase.from(table).update({ status: "pending", version }).eq("id", entityId);
+  } else if (entityType === "expense") {
+    await supabase.from("expenses").update({ status: "pending" }).eq("id", entityId);
   }
 
   if (assignedTo) {
@@ -138,6 +145,17 @@ export async function decideApproval(
   const table = ENTITY_TABLE[request.entity_type as ApprovalEntityType];
   if (table) {
     await supabase.from(table).update({ status: decision }).eq("id", request.entity_id);
+  } else if (request.entity_type === "expense") {
+    await supabase
+      .from("expenses")
+      .update({
+        status: decision,
+        // Stamp who signed off, so Finance can settle without re-checking.
+        ...(decision === "approved"
+          ? { approved_by: user.id, approved_at: new Date().toISOString() }
+          : {}),
+      })
+      .eq("id", request.entity_id);
   }
 
   if (request.requested_by) {

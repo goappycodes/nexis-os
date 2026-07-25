@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Department, Profile } from "@/lib/types";
@@ -6,40 +7,45 @@ export type SessionUser = Profile & {
   department: Department | null;
   /** Departments where this user carries manager rights. */
   managedDepartmentIds: string[];
+  /** Approvals assigned to this user and still pending — drives the nav badge. */
+  pendingApprovals: number;
+};
+
+type SessionBundle = {
+  profile: Profile;
+  department: Department | null;
+  managed_department_ids: string[];
+  pending_approvals: number;
 };
 
 /**
  * The signed-in user's profile, or null. Use in layouts/pages that render for
  * both states; use requireUser() when a session is mandatory.
  */
-export async function getSessionUser(): Promise<SessionUser | null> {
+/**
+ * One round trip for the whole session context.
+ *
+ * The middleware has already validated the JWT for this request, so we skip a
+ * second auth.getUser() call and let the database resolve auth.uid() itself.
+ * React's cache() then dedupes across the layout and the page, so a full page
+ * render costs exactly one database call for session context.
+ */
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*, department:departments!profiles_primary_department_id_fkey(*)")
-    .eq("id", user.id)
-    .single();
+  const { data, error } = await supabase.rpc("session_bundle");
+  if (error || !data) return null;
 
-  if (!profile) return null;
-
-  const { data: memberships } = await supabase
-    .from("department_members")
-    .select("department_id, is_manager")
-    .eq("user_id", user.id);
+  const bundle = data as unknown as SessionBundle;
+  if (!bundle?.profile) return null;
 
   return {
-    ...(profile as unknown as Profile),
-    department: (profile as unknown as { department: Department | null }).department ?? null,
-    managedDepartmentIds: (memberships ?? [])
-      .filter((m) => m.is_manager)
-      .map((m) => m.department_id),
+    ...bundle.profile,
+    department: bundle.department ?? null,
+    managedDepartmentIds: bundle.managed_department_ids ?? [],
+    pendingApprovals: Number(bundle.pending_approvals ?? 0),
   };
-}
+});
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await getSessionUser();

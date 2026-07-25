@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Check, FileText, Image as ImageIcon, MessageSquare, X } from "lucide-react";
+import { Check, FileText, Image as ImageIcon, MessageSquare, Receipt, X } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { decideApproval } from "./actions";
@@ -11,9 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/misc";
 import { Sheet } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/input";
-import { APPROVAL_STATUS } from "@/lib/constants";
-import { relativeDay } from "@/lib/utils";
-import type { ApprovalRequest, Creative, Profile, Script } from "@/lib/types";
+import { APPROVAL_STATUS, EXPENSE_CATEGORY } from "@/lib/constants";
+import { formatDate, formatMoney, relativeDay } from "@/lib/utils";
+import type { ApprovalRequest, Creative, Expense, Profile, Script } from "@/lib/types";
 
 type Request = ApprovalRequest & {
   requester: Pick<Profile, "id" | "full_name" | "email" | "avatar_url"> | null;
@@ -25,12 +25,14 @@ export function ApprovalCard({
   request,
   creative,
   script,
+  expense,
   canDecide,
   isOwnSubmission,
 }: {
   request: Request;
   creative: Creative | null;
   script: Script | null;
+  expense: Expense | null;
   canDecide: boolean;
   isOwnSubmission: boolean;
 }) {
@@ -85,6 +87,8 @@ export function ApprovalCard({
           {previewUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={previewUrl} alt="" className="size-full object-cover" />
+          ) : expense ? (
+            <Receipt className="size-6 text-[var(--text-muted)]" />
           ) : script ? (
             <FileText className="size-6 text-[var(--text-muted)]" />
           ) : (
@@ -144,6 +148,33 @@ export function ApprovalCard({
       {creative?.caption && (
         <div className="px-4 pb-3">
           <p className="muted line-clamp-2 text-xs leading-relaxed">{creative.caption}</p>
+        </div>
+      )}
+
+      {/* An approver deciding on money needs the amount and what it is for
+          without opening anything. */}
+      {expense && (
+        <div className="px-4 pb-3">
+          <div className="flex items-baseline justify-between gap-3 rounded-xl bg-[var(--surface-sunken)] px-3 py-2.5">
+            <span className="min-w-0">
+              <span className="block text-lg font-semibold tabular-nums">
+                {formatMoney(expense.amount)}
+              </span>
+              <span className="muted block truncate text-xs">
+                {EXPENSE_CATEGORY[expense.category]}
+                {expense.vendor ? ` · ${expense.vendor}` : ""}
+                {` · ${formatDate(expense.expense_date)}`}
+              </span>
+            </span>
+            <span className="muted shrink-0 text-xs">
+              {expense.is_reimbursement ? "Reimbursement" : "Vendor payment"}
+            </span>
+          </div>
+          {expense.description && (
+            <p className="muted mt-2 line-clamp-2 text-xs leading-relaxed">
+              {expense.description}
+            </p>
+          )}
         </div>
       )}
 

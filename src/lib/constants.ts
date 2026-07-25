@@ -2,6 +2,8 @@ import type {
   ApprovalStatus,
   CampaignStatus,
   EventStatus,
+  ExpenseCategory,
+  ExpenseStatus,
   TaskPriority,
   TaskStatus,
   WorkCategory,
@@ -72,6 +74,29 @@ export const WORK_CATEGORY: Record<WorkCategory, { label: string; icon: string }
   hospitality:   { label: "Hospitality",   icon: "coffee" },
   documentation: { label: "Documentation", icon: "file-text" },
   other:         { label: "Other",         icon: "circle-dashed" },
+};
+
+export const EXPENSE_STATUS: Record<ExpenseStatus, Meta> = {
+  draft:             { label: "Draft",             className: "bg-ink-100 text-ink-500 dark:bg-ink-700 dark:text-ink-200", dot: "bg-ink-300" },
+  pending:           { label: "Awaiting approval", className: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200", dot: "bg-amber-500" },
+  approved:          { label: "Approved",          className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200", dot: "bg-blue-500" },
+  changes_requested: { label: "Changes requested", className: "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200", dot: "bg-orange-500" },
+  rejected:          { label: "Rejected",          className: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200", dot: "bg-red-500" },
+  paid:              { label: "Paid",              className: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200", dot: "bg-green-500" },
+};
+
+export const EXPENSE_CATEGORY: Record<ExpenseCategory, string> = {
+  travel: "Travel",
+  vendor: "Vendor",
+  equipment: "Equipment",
+  food: "Food & hospitality",
+  marketing: "Marketing",
+  printing: "Printing",
+  maintenance: "Maintenance",
+  salary: "Salary & stipend",
+  utilities: "Utilities",
+  event: "Event",
+  other: "Other",
 };
 
 export const ROLE_LABEL = {

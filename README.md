@@ -112,6 +112,38 @@ cron in `vercel.json`, which runs at 03:30 UTC (09:00 IST). To run it by hand:
 curl "http://localhost:3000/api/cron/reminders?secret=$CRON_SECRET"
 ```
 
+### Expenses
+
+Reimbursements and vendor payments both live in `expenses` and route through
+the same approval engine as creatives and scripts. Approving is agreeing to
+spend; marking paid is the money actually leaving, and only Finance can do the
+second. Receipts go to a private bucket and are served through signed URLs.
+
+Row-level security is tighter here than elsewhere: a team member sees only
+their own claims, managers see their department's, Finance sees everything.
+
+### Loading and performance
+
+Pages render blocking rather than streaming, and navigation feedback comes from
+the snake progress bar at the top of the screen (`src/components/shell/snake-loader.tsx`).
+
+This is deliberate. Streaming Suspense boundaries — including route-level
+`loading.tsx` — do not resolve on this stack (Next 15.5.21 / React 19.2): the
+server emits the full HTML but the boundary stays postponed (`<!--$~-->`) and
+the content never appears, leaving a permanently blank page. Verified in both
+Chrome and the preview browser, with and without Turbopack, so it is not a
+browser or bundler quirk. Blocking renders are ~270-480ms in production, which
+is well inside the budget, and the snake bar covers the wait.
+
+**If you reintroduce `loading.tsx` or a `<Suspense>` boundary around server
+content, check the page still renders on a hard refresh** — not just on a
+client-side navigation, which masks the bug.
+
+Session context (profile, department, managed departments, pending-approval
+count) comes back in a single `session_bundle()` call and is deduped with
+React's `cache()`, so a full page render costs one database round trip for auth
+instead of four.
+
 ## Database
 
 Migrations live in `supabase/migrations` and run in filename order. The runner

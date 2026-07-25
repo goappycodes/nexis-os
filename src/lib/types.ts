@@ -279,6 +279,40 @@ export type Reminder = {
   created_at: string;
 };
 
+export type ExpenseStatus =
+  | "draft" | "pending" | "approved" | "changes_requested" | "rejected" | "paid";
+
+export type ExpenseCategory =
+  | "travel" | "vendor" | "equipment" | "food" | "marketing" | "printing"
+  | "maintenance" | "salary" | "utilities" | "event" | "other";
+
+export type Expense = {
+  id: string;
+  title: string;
+  description: string | null;
+  amount: number;
+  category: ExpenseCategory;
+  status: ExpenseStatus;
+  vendor: string | null;
+  expense_date: string;
+  is_reimbursement: boolean;
+  department_id: string | null;
+  event_id: string | null;
+  campaign_id: string | null;
+  requested_by: string | null;
+  approver_id: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  paid_at: string | null;
+  paid_by: string | null;
+  payment_method: string | null;
+  payment_ref: string | null;
+  receipt_path: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type MessageLog = {
   id: string;
   provider: string;
@@ -336,11 +370,23 @@ export type Database = {
       event_registrations: TableDef<EventRegistration, "event_id" | "full_name">;
       notifications: TableDef<Notification, "user_id" | "title">;
       reminders: TableDef<Reminder, "send_at">;
+      expenses: TableDef<Expense, "title" | "amount">;
       message_log: TableDef<MessageLog, "channel" | "recipient" | "status">;
       activity_log: TableDef<ActivityLog, "action">;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      /** Profile, department, managed departments and pending-approval count in one call. */
+      session_bundle: {
+        Args: Record<string, never>;
+        Returns: {
+          profile: Profile;
+          department: Department | null;
+          managed_department_ids: string[];
+          pending_approvals: number;
+        } | null;
+      };
+    };
     Enums: {
       app_role: AppRole;
       event_status: EventStatus;

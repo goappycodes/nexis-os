@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { dispatchDueReminders, scheduleDueTaskReminders } from "@/lib/messaging/reminders";
+import {
+  dispatchDueReminders,
+  scheduleDueTaskReminders,
+  scheduleUrgentTaskReminders,
+} from "@/lib/messaging/reminders";
 
 /**
  * Reminder cron.
@@ -29,12 +33,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const scheduled = await scheduleDueTaskReminders();
+    const escalated = await scheduleUrgentTaskReminders();
     const dispatched = await dispatchDueReminders();
 
     return NextResponse.json({
       ok: true,
       ranAt: new Date().toISOString(),
       scheduled,
+      escalated,
       dispatched,
     });
   } catch (error) {

@@ -1,9 +1,8 @@
-import { Suspense } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
-import { EmptyState, Skeleton } from "@/components/ui/misc";
+import { EmptyState } from "@/components/ui/misc";
 import type { Profile, Task } from "@/lib/types";
 import { MyWorkList } from "./my-work-list";
 
@@ -27,9 +26,7 @@ export default async function MyWorkPage({
         <FilterLink label="Done" value="done" active={filter} />
       </div>
 
-      <Suspense key={filter} fallback={<Skeleton className="h-72 rounded-2xl" />}>
-        <WorkList filter={filter} />
-      </Suspense>
+      <WorkList filter={filter} />
     </div>
   );
 }
