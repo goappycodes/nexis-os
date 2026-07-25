@@ -78,6 +78,40 @@ date, so nothing is rebuilt from memory and nothing quietly gets skipped.
 creatives, scripts, campaigns, expenses. Each carries a version, so a re-upload
 after "changes requested" is tracked rather than overwriting history.
 
+### WhatsApp reminders
+
+Delivery goes through MSG91 on the integrated number configured in
+`MSG91_WHATSAPP_INTEGRATED_NUMBER`. Everything sends via one adapter
+(`src/lib/messaging/msg91.ts`), so swapping providers means replacing one file.
+
+Five UTILITY templates back the notifications. `{{1}}` is always the
+recipient's first name; the rest come from the reminder's `payload.variables`.
+
+| Template | Sent when |
+| -------- | --------- |
+| `nexisos_task_reminder` | A task is due tomorrow |
+| `nexisos_task_assigned` | Work is assigned to someone |
+| `nexisos_approval_pending` | A creative or script needs a decision |
+| `nexisos_approval_decision` | A submission is approved or sent back |
+| `nexisos_event_countdown` | An event is approaching with steps still open |
+
+```bash
+node scripts/msg91-templates.mjs list     # check approval status
+node scripts/msg91-templates.mjs create   # submit any that are missing
+```
+
+Templates must be **approved by Meta** before anything can actually send. Until
+then keep `MSG91_DRY_RUN=true` — messages are logged to `message_log` and
+visible under Admin → Message log, but nothing leaves the building. Set
+`MSG91_DRY_RUN=false` once `list` shows them approved.
+
+Approval notifications deliver immediately; due-date reminders are queued by the
+cron in `vercel.json`, which runs at 03:30 UTC (09:00 IST). To run it by hand:
+
+```bash
+curl "http://localhost:3000/api/cron/reminders?secret=$CRON_SECRET"
+```
+
 ## Database
 
 Migrations live in `supabase/migrations` and run in filename order. The runner

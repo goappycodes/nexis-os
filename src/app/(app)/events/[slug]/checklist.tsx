@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useOptimistic, useState, useTransition } from "react";
-import { Check, ChevronDown, Plus, UserPlus } from "lucide-react";
+import { Check, ChevronDown, MessageSquare, Plus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { addEventTask, assignTask, toggleTask } from "../actions";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Avatar, EmptyState } from "@/components/ui/misc";
 import { Sheet } from "@/components/ui/sheet";
 import { Field, Input, Select } from "@/components/ui/input";
 import { NavIcon } from "@/components/shell/nav-icon";
+import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { WORK_CATEGORY } from "@/lib/constants";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { Profile, Task, WorkCategory } from "@/lib/types";
@@ -26,16 +27,21 @@ export function EventChecklist({
   team,
   canManage,
   departmentId,
+  currentUserId,
+  commentCounts,
 }: {
   eventId: string;
   tasks: ChecklistTask[];
   team: TeamMember[];
   canManage: boolean;
   departmentId: string | null;
+  currentUserId: string;
+  commentCounts: Record<string, number>;
 }) {
   const [, startTransition] = useTransition();
   const [addOpen, setAddOpen] = useState(false);
   const [assigning, setAssigning] = useState<ChecklistTask | null>(null);
+  const [detail, setDetail] = useState<ChecklistTask | null>(null);
   const [showDone, setShowDone] = useState(false);
 
   // Optimistic toggle: ticking a box on a phone must feel instant, even on a
@@ -147,6 +153,8 @@ export function EventChecklist({
             items={items}
             onToggle={handleToggle}
             onAssignClick={setAssigning}
+            onOpenDetail={setDetail}
+            commentCounts={commentCounts}
             canManage={canManage}
           />
         ))}
@@ -168,6 +176,14 @@ export function EventChecklist({
         eventId={eventId}
         team={team}
         departmentId={departmentId}
+      />
+
+      <TaskDetailSheet
+        task={detail}
+        team={team}
+        currentUserId={currentUserId}
+        canEdit={canManage || detail?.assignee_id === currentUserId}
+        onClose={() => setDetail(null)}
       />
 
       <Sheet
@@ -218,12 +234,16 @@ function CategoryGroup({
   items,
   onToggle,
   onAssignClick,
+  onOpenDetail,
+  commentCounts,
   canManage,
 }: {
   category: WorkCategory;
   items: ChecklistTask[];
   onToggle: (task: ChecklistTask) => void;
   onAssignClick: (task: ChecklistTask) => void;
+  onOpenDetail: (task: ChecklistTask) => void;
+  commentCounts: Record<string, number>;
   canManage: boolean;
 }) {
   const [open, setOpen] = useState(true);
@@ -259,6 +279,8 @@ function CategoryGroup({
               task={task}
               onToggle={onToggle}
               onAssignClick={onAssignClick}
+              onOpenDetail={onOpenDetail}
+              commentCount={commentCounts[task.id] ?? 0}
               canManage={canManage}
             />
           ))}
@@ -272,11 +294,15 @@ function TaskRow({
   task,
   onToggle,
   onAssignClick,
+  onOpenDetail,
+  commentCount,
   canManage,
 }: {
   task: ChecklistTask;
   onToggle: (task: ChecklistTask) => void;
   onAssignClick: (task: ChecklistTask) => void;
+  onOpenDetail: (task: ChecklistTask) => void;
+  commentCount: number;
   canManage: boolean;
 }) {
   const done = task.status === "done";
@@ -298,25 +324,35 @@ function TaskRow({
         {done && <Check className="size-3.5 text-white" strokeWidth={3} />}
       </button>
 
-      <div className="min-w-0 flex-1">
+      {/* Tapping the body opens details and comments — the checkbox stays a
+          separate target so ticking off never opens a sheet by accident. */}
+      <button onClick={() => onOpenDetail(task)} className="min-w-0 flex-1 text-left">
         <p className={cn("text-sm leading-snug", done && "text-[var(--text-muted)] line-through")}>
           {task.title}
         </p>
         {task.description && !done && (
-          <p className="muted mt-0.5 text-xs leading-snug">{task.description}</p>
+          <p className="muted mt-0.5 line-clamp-2 text-xs leading-snug">{task.description}</p>
         )}
-        {task.due_at && (
-          <p
-            className={cn(
-              "mt-1 text-xs",
-              overdue ? "font-medium text-red-600" : "text-[var(--text-muted)]"
-            )}
-          >
-            {overdue ? "Overdue · " : "Due "}
-            {formatDate(task.due_at)}
-          </p>
-        )}
-      </div>
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {task.due_at && (
+            <span
+              className={cn(
+                "text-xs",
+                overdue ? "font-medium text-red-600" : "text-[var(--text-muted)]"
+              )}
+            >
+              {overdue ? "Overdue · " : "Due "}
+              {formatDate(task.due_at)}
+            </span>
+          )}
+          {commentCount > 0 && (
+            <span className="muted inline-flex items-center gap-1 text-xs">
+              <MessageSquare className="size-3" />
+              {commentCount}
+            </span>
+          )}
+        </div>
+      </button>
 
       <button
         onClick={() => canManage && onAssignClick(task)}

@@ -59,6 +59,18 @@ export default async function EventDetailPage({
     assignee: Pick<Profile, "id" | "full_name" | "avatar_url" | "email"> | null;
   })[];
 
+  // One query for every comment count on the page, so each checklist row can
+  // show its badge without a per-row request.
+  const { data: commentRows } = await supabase
+    .from("task_comments")
+    .select("task_id")
+    .in("task_id", allTasks.map((t) => t.id));
+
+  const commentCounts: Record<string, number> = {};
+  for (const row of commentRows ?? []) {
+    commentCounts[row.task_id] = (commentCounts[row.task_id] ?? 0) + 1;
+  }
+
   const active = allTasks.filter((t) => t.status !== "cancelled");
   const done = active.filter((t) => t.status === "done").length;
   const pct = active.length ? (done / active.length) * 100 : 0;
@@ -151,6 +163,8 @@ export default async function EventDetailPage({
         team={(team ?? []) as unknown as Pick<Profile, "id" | "full_name" | "avatar_url" | "email">[]}
         canManage={canManage}
         departmentId={typed.department?.id ?? null}
+        currentUserId={user.id}
+        commentCounts={commentCounts}
       />
     </div>
   );

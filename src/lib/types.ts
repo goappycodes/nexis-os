@@ -279,6 +279,19 @@ export type Reminder = {
   created_at: string;
 };
 
+export type MessageLog = {
+  id: string;
+  provider: string;
+  channel: ReminderChannel;
+  recipient: string;
+  template: string | null;
+  body: string | null;
+  status: string;
+  provider_response: Record<string, unknown> | null;
+  reminder_id: string | null;
+  created_at: string;
+};
+
 export type ActivityLog = {
   id: string;
   actor_id: string | null;
@@ -323,6 +336,7 @@ export type Database = {
       event_registrations: TableDef<EventRegistration, "event_id" | "full_name">;
       notifications: TableDef<Notification, "user_id" | "title">;
       reminders: TableDef<Reminder, "send_at">;
+      message_log: TableDef<MessageLog, "channel" | "recipient" | "status">;
       activity_log: TableDef<ActivityLog, "action">;
     };
     Views: Record<string, never>;
