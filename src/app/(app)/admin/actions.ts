@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser, isSuperAdmin } from "@/lib/auth";
+import { invalidate } from "@/lib/reference-data";
 import type { AppRole } from "@/lib/types";
 
 export type ActionState = { error?: string; ok?: boolean } | undefined;
@@ -30,6 +31,7 @@ export async function updateUserRole(userId: string, role: AppRole): Promise<Act
   const { error } = await supabase.from("profiles").update({ role }).eq("id", userId);
   if (error) return { error: error.message };
 
+  invalidate("team");
   revalidatePath("/admin/people");
   revalidatePath("/team");
   return { ok: true };
@@ -50,6 +52,7 @@ export async function updateUserDepartment(
 
   if (error) return { error: error.message };
 
+  invalidate("team");
   revalidatePath("/admin/people");
   revalidatePath("/team");
   return { ok: true };
@@ -68,6 +71,7 @@ export async function setUserActive(userId: string, isActive: boolean): Promise<
 
   if (error) return { error: error.message };
 
+  invalidate("team");
   revalidatePath("/admin/people");
   revalidatePath("/team");
   return { ok: true };

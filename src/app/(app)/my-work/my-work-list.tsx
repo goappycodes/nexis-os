@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { toggleTask } from "../events/actions";
 import { Card } from "@/components/ui/card";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
+import { Confetti } from "@/components/ui/celebrate";
+import { taskDoneMessage } from "@/lib/encouragement";
 import { TASK_PRIORITY } from "@/lib/constants";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { Profile, Task } from "@/lib/types";
@@ -29,6 +31,7 @@ export function MyWorkList({
 }) {
   const [, startTransition] = useTransition();
   const [detail, setDetail] = useState<WorkTask | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
 
   const [optimistic, apply] = useOptimistic(
     tasks,
@@ -40,6 +43,18 @@ export function MyWorkList({
 
   function handleToggle(task: WorkTask) {
     const next = task.status !== "done";
+
+    if (next) {
+      const overdue = Boolean(task.due_at && new Date(task.due_at) < new Date());
+      toast.success(taskDoneMessage(task.title.length + task.sort_order, overdue));
+
+      // Clearing the whole queue is worth marking.
+      const openLeft = optimistic.filter(
+        (t) => t.status !== "done" && t.status !== "cancelled" && t.id !== task.id
+      ).length;
+      if (openLeft === 0) setCelebrating(true);
+    }
+
     startTransition(async () => {
       apply({ id: task.id, done: next });
       const result = await toggleTask(task.id, next);
@@ -111,6 +126,8 @@ export function MyWorkList({
           );
         })}
       </Card>
+
+      <Confetti active={celebrating} onDone={() => setCelebrating(false)} />
 
       <TaskDetailSheet
         task={detail}

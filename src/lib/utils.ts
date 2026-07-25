@@ -68,6 +68,14 @@ export function slugify(value: string) {
     .slice(0, 60);
 }
 
+/** "812 KB" / "1.9 MB" — picks the unit so small files don't read as "0.0 MB". */
+export function formatFileSize(bytes: number | null | undefined) {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 /** Indian rupee formatting: ₹1,20,000 */
 export function formatMoney(amount: number | null | undefined) {
   if (amount === null || amount === undefined) return "—";

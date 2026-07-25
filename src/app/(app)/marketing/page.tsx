@@ -4,6 +4,8 @@ import { requireUser } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/misc";
+import { BlankPageIllustration } from "@/components/ui/illustrations";
+import { EMPTY_STATES } from "@/lib/encouragement";
 import { APPROVAL_STATUS, CAMPAIGN_STATUS } from "@/lib/constants";
 import { formatMoney, relativeDay } from "@/lib/utils";
 import type { Creative, MarketingCampaign, Profile, Script } from "@/lib/types";
@@ -130,9 +132,9 @@ async function CalendarTab({ month }: { month: string }) {
     return (
       <Card>
         <EmptyState
-          icon={<Megaphone className="size-6" />}
-          title="Nothing planned this month"
-          description="Add a campaign to start building the marketing plan for this month."
+          illustration={<BlankPageIllustration className="w-28" />}
+          title={EMPTY_STATES.noCampaigns.title}
+          description={EMPTY_STATES.noCampaigns.body}
         />
       </Card>
     );
@@ -207,9 +209,9 @@ async function CreativesTab({ month }: { month: string }) {
     return (
       <Card>
         <EmptyState
-          icon={<Megaphone className="size-6" />}
+          illustration={<BlankPageIllustration className="w-28" />}
           title="No creatives this month"
-          description="Upload a creative and send it straight into the approval queue."
+          description="Upload one and send it straight into the approval queue — no more chasing on WhatsApp."
         />
       </Card>
     );
@@ -242,9 +244,9 @@ async function ScriptsTab({ month }: { month: string }) {
     return (
       <Card>
         <EmptyState
-          icon={<Megaphone className="size-6" />}
+          illustration={<BlankPageIllustration className="w-28" />}
           title="No scripts this month"
-          description="Every script that goes out should be approved here first."
+          description="Write it here, get it approved here. One place, one version, no confusion."
         />
       </Card>
     );

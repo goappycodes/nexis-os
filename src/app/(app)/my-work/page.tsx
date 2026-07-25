@@ -1,8 +1,9 @@
-import { CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/misc";
+import { AllClearIllustration } from "@/components/ui/illustrations";
+import { EMPTY_STATES } from "@/lib/encouragement";
 import type { Profile, Task } from "@/lib/types";
 import { MyWorkList } from "./my-work-list";
 
@@ -98,18 +99,20 @@ async function WorkList({ filter }: { filter: string }) {
     return (
       <Card>
         <EmptyState
-          icon={<CheckCircle2 className="size-6" />}
+          illustration={<AllClearIllustration className="w-32" />}
           title={
             filter === "overdue"
-              ? "Nothing overdue"
+              ? EMPTY_STATES.noOverdue.title
               : filter === "done"
                 ? "Nothing completed yet"
-                : "Nothing on your plate"
+                : EMPTY_STATES.noOpenWork.title
           }
           description={
             filter === "overdue"
-              ? "You're on top of your deadlines."
-              : "Tasks assigned to you will show up here."
+              ? EMPTY_STATES.noOverdue.body
+              : filter === "done"
+                ? "Once you start ticking things off, they collect here."
+                : EMPTY_STATES.noOpenWork.body
           }
         />
       </Card>

@@ -1,26 +1,15 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
+import { getDepartments, getPlaybooks } from "@/lib/reference-data";
 import { NewEventForm } from "./new-event-form";
 
 export const metadata = { title: "New event" };
 
 export default async function NewEventPage() {
   const user = await requireUser();
-  const supabase = await createClient();
-
-  const [{ data: departments }, { data: playbooks }] = await Promise.all([
-    supabase.from("departments").select("id, name").eq("is_active", true).order("sort_order"),
-    supabase.from("event_playbooks").select("id, name, description, is_default").order("name"),
-  ]);
-
-  // Show the step count so the user knows what they're opting into.
-  const { data: counts } = await supabase.from("event_playbook_items").select("playbook_id");
-  const stepCounts = new Map<string, number>();
-  for (const row of counts ?? []) {
-    stepCounts.set(row.playbook_id, (stepCounts.get(row.playbook_id) ?? 0) + 1);
-  }
+  // Both cached: this page costs no database round trips once warm.
+  const [departments, playbooks] = await Promise.all([getDepartments(), getPlaybooks()]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
@@ -40,11 +29,8 @@ export default async function NewEventPage() {
       </div>
 
       <NewEventForm
-        departments={departments ?? []}
-        playbooks={(playbooks ?? []).map((p) => ({
-          ...p,
-          steps: stepCounts.get(p.id) ?? 0,
-        }))}
+        departments={departments}
+        playbooks={playbooks}
         defaultDepartmentId={user.primary_department_id}
       />
     </div>

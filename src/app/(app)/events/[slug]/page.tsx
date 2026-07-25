@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/misc";
 import { EVENT_STATUS } from "@/lib/constants";
+import { progressMessage } from "@/lib/encouragement";
 import { formatDateTime, formatMoney, daysUntil } from "@/lib/utils";
 import type { Event, Profile, Task } from "@/lib/types";
 import { EventChecklist } from "./checklist";
@@ -149,11 +150,7 @@ export default async function EventDetailPage({
             </p>
           </div>
           <Progress value={pct} />
-          <p className="muted mt-2 text-xs">
-            {active.length - done === 0
-              ? "Everything is done. Nice."
-              : `${active.length - done} steps still open`}
-          </p>
+          <p className="muted mt-2 text-xs">{progressMessage(done, active.length)}</p>
         </Card>
       )}
 

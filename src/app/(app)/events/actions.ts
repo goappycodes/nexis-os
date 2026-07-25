@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
+import { getPlaybookItems } from "@/lib/reference-data";
 import { slugify } from "@/lib/utils";
 import type { EventStatus, TaskStatus } from "@/lib/types";
 
@@ -71,13 +72,10 @@ export async function createEvent(_prev: ActionState, formData: FormData): Promi
   }
 
   if (playbookId) {
-    const { data: items } = await supabase
-      .from("event_playbook_items")
-      .select("*")
-      .eq("playbook_id", playbookId)
-      .order("sort_order");
+    const allItems = await getPlaybookItems();
+    const items = allItems.filter((i) => i.playbook_id === playbookId);
 
-    if (items?.length) {
+    if (items.length) {
       const tasks = items.map((item) => {
         // Due at 6pm on the offset day — a workday deadline, not midnight.
         const due = new Date(eventDate);

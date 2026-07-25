@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, Progress } from "@/components/ui/misc";
+import { NoEventsIllustration } from "@/components/ui/illustrations";
+import { EMPTY_STATES } from "@/lib/encouragement";
 import { EVENT_STATUS } from "@/lib/constants";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { Event } from "@/lib/types";
@@ -76,12 +78,12 @@ async function EventList({ showPast }: { showPast: boolean }) {
     return (
       <Card>
         <EmptyState
-          icon={<CalendarDays className="size-6" />}
-          title={showPast ? "No past events" : "No upcoming events"}
+          illustration={<NoEventsIllustration className="w-36" />}
+          title={showPast ? "No past events yet" : EMPTY_STATES.noEvents.title}
           description={
             showPast
-              ? "Events move here automatically once their date passes."
-              : "Create an event and Nexis OS builds the full 38-step checklist for you."
+              ? "Events move here once their date passes. Your history builds itself."
+              : EMPTY_STATES.noEvents.body
           }
           action={
             !showPast && (

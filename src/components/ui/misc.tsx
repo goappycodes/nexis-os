@@ -44,12 +44,16 @@ export function Avatar({
 
 export function EmptyState({
   icon,
+  illustration,
   title,
   description,
   action,
   className,
 }: {
+  /** Small glyph, shown in a rounded tile. */
   icon?: React.ReactNode;
+  /** Full-size artwork, shown without a container. Takes precedence over icon. */
+  illustration?: React.ReactNode;
   title: string;
   description?: string;
   action?: React.ReactNode;
@@ -57,11 +61,13 @@ export function EmptyState({
 }) {
   return (
     <div className={cn("flex flex-col items-center justify-center px-6 py-14 text-center", className)}>
-      {icon && (
+      {illustration ? (
+        <div className="mb-4">{illustration}</div>
+      ) : icon ? (
         <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[var(--surface-sunken)] text-[var(--text-muted)]">
           {icon}
         </div>
-      )}
+      ) : null}
       <p className="font-semibold">{title}</p>
       {description && <p className="muted mt-1 max-w-sm text-sm">{description}</p>}
       {action && <div className="mt-5">{action}</div>}

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { Field, Input, Select, Textarea } from "@/components/ui/input";
 import { MARKETING_CHANNELS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, formatFileSize } from "@/lib/utils";
 import type { Profile } from "@/lib/types";
 
 type Option = { id: string; name: string };
@@ -311,7 +311,7 @@ function CreativeSheet({
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">{file.name}</span>
-                <span className="muted text-xs">{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                <span className="muted text-xs">{formatFileSize(file.size)}</span>
               </span>
               <button
                 type="button"

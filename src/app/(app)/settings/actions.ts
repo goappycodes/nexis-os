@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
+import { invalidate } from "@/lib/reference-data";
 import { toE164 } from "@/lib/utils";
 
 export type ActionState = { error?: string; ok?: boolean } | undefined;
@@ -37,6 +38,7 @@ export async function updateProfile(
 
   if (error) return { error: error.message };
 
+  invalidate("team");
   revalidatePath("/settings");
   revalidatePath("/", "layout");
   return { ok: true };

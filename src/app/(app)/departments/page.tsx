@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
+import { getDepartments } from "@/lib/reference-data";
 import { Card } from "@/components/ui/card";
 import { NavIcon } from "@/components/shell/nav-icon";
-import type { Department } from "@/lib/types";
 
 export const metadata = { title: "Departments" };
 
@@ -10,13 +10,7 @@ export default async function DepartmentsPage() {
   await requireUser();
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from("departments")
-    .select("*")
-    .eq("is_active", true)
-    .order("sort_order");
-
-  const departments = (data ?? []) as Department[];
+  const departments = await getDepartments();
 
   // Head counts and open-work counts in two queries rather than 2N.
   const [{ data: members }, { data: openTasks }] = await Promise.all([

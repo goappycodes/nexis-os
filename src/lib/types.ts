@@ -313,6 +313,43 @@ export type Expense = {
   updated_at: string;
 };
 
+export type BrandTokenKind = "color" | "font" | "rule";
+
+export type BrandAssetCategory =
+  | "logo" | "template" | "photo" | "document" | "presentation"
+  | "video" | "icon" | "font" | "other";
+
+export type BrandToken = {
+  id: string;
+  kind: BrandTokenKind;
+  name: string;
+  value: string;
+  description: string | null;
+  usage_note: string | null;
+  is_primary: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BrandAsset = {
+  id: string;
+  name: string;
+  description: string | null;
+  category: BrandAssetCategory;
+  file_path: string;
+  thumbnail_path: string | null;
+  file_size: number | null;
+  mime_type: string | null;
+  tags: string[];
+  department_id: string | null;
+  is_pinned: boolean;
+  download_count: number;
+  uploaded_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type MessageLog = {
   id: string;
   provider: string;
@@ -371,6 +408,8 @@ export type Database = {
       notifications: TableDef<Notification, "user_id" | "title">;
       reminders: TableDef<Reminder, "send_at">;
       expenses: TableDef<Expense, "title" | "amount">;
+      brand_tokens: TableDef<BrandToken, "kind" | "name">;
+      brand_assets: TableDef<BrandAsset, "name" | "file_path">;
       message_log: TableDef<MessageLog, "channel" | "recipient" | "status">;
       activity_log: TableDef<ActivityLog, "action">;
     };
@@ -385,6 +424,11 @@ export type Database = {
           managed_department_ids: string[];
           pending_approvals: number;
         } | null;
+      };
+      /** Bumps a brand asset's download counter. */
+      record_asset_download: {
+        Args: { asset_id: string };
+        Returns: undefined;
       };
     };
     Enums: {

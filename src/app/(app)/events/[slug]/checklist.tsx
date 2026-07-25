@@ -11,6 +11,9 @@ import { Sheet } from "@/components/ui/sheet";
 import { Field, Input, Select } from "@/components/ui/input";
 import { NavIcon } from "@/components/shell/nav-icon";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
+import { Confetti } from "@/components/ui/celebrate";
+import { AllClearIllustration } from "@/components/ui/illustrations";
+import { EMPTY_STATES, taskDoneMessage } from "@/lib/encouragement";
 import { WORK_CATEGORY } from "@/lib/constants";
 import { cn, daysUntil, formatDate } from "@/lib/utils";
 import type { Profile, Task, WorkCategory } from "@/lib/types";
@@ -43,6 +46,7 @@ export function EventChecklist({
   const [assigning, setAssigning] = useState<ChecklistTask | null>(null);
   const [detail, setDetail] = useState<ChecklistTask | null>(null);
   const [showDone, setShowDone] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
 
   // Optimistic toggle: ticking a box on a phone must feel instant, even on a
   // patchy campus connection. The server action reconciles afterwards.
@@ -79,6 +83,20 @@ export function EventChecklist({
 
   function handleToggle(task: ChecklistTask) {
     const next = task.status !== "done";
+
+    if (next) {
+      const overdue = Boolean(task.due_at && new Date(task.due_at) < new Date());
+      // Seed off the title so the same task always gets the same line, and
+      // consecutive different tasks get different ones.
+      toast.success(taskDoneMessage(task.title.length + task.sort_order, overdue));
+
+      // Was this the last thing standing?
+      const openLeft = optimisticTasks.filter(
+        (t) => t.status !== "done" && t.status !== "cancelled" && t.id !== task.id
+      ).length;
+      if (openLeft === 0) setCelebrating(true);
+    }
+
     startTransition(async () => {
       applyOptimistic({ id: task.id, done: next });
       const result = await toggleTask(task.id, next);
@@ -163,12 +181,14 @@ export function EventChecklist({
       {grouped.length === 0 && (
         <Card>
           <EmptyState
-            icon={<Check className="size-6" />}
-            title="All done"
-            description="Every step on this checklist is complete."
+            illustration={<AllClearIllustration className="w-32" />}
+            title={EMPTY_STATES.allDone.title}
+            description={EMPTY_STATES.allDone.body}
           />
         </Card>
       )}
+
+      <Confetti active={celebrating} onDone={() => setCelebrating(false)} />
 
       <AddTaskSheet
         open={addOpen}

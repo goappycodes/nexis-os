@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { ChevronRight, MessageSquare, Plus } from "lucide-react";
+import { useOptimistic, useState, useTransition } from "react";
+import { ChevronRight, GripVertical, MessageSquare, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { createBoardTask, moveTaskToColumn } from "../actions";
 import { Button } from "@/components/ui/button";
@@ -41,15 +41,43 @@ export function BoardView({
   const [addTo, setAddTo] = useState<BoardColumn | null>(null);
   const [detail, setDetail] = useState<BoardTask | null>(null);
   const [moving, setMoving] = useState<BoardTask | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // The card should land in its new column the instant you drop it, not
+  // after the server round trip.
+  const [cards, applyMove] = useOptimistic(
+    tasks,
+    (current, update: { id: string; columnId: string }) =>
+      current.map((t) => (t.id === update.id ? { ...t, column_id: update.columnId } : t))
+  );
 
   function move(task: BoardTask, column: BoardColumn) {
     setMoving(null);
+    if (task.column_id === column.id) return;
+
     startTransition(async () => {
+      applyMove({ id: task.id, columnId: column.id });
       const result = await moveTaskToColumn(task.id, column.id, column.name);
       if (result?.error) toast.error(result.error);
       else toast.success(`Moved to ${column.name}`);
     });
+  }
+
+  function handleDrop(column: BoardColumn, event: React.DragEvent) {
+    event.preventDefault();
+    setDragOver(null);
+
+    // Read the id off the drag payload rather than component state: state set
+    // in onDragStart may not have committed yet, and dataTransfer is the
+    // mechanism the platform actually guarantees.
+    const id = event.dataTransfer.getData("text/plain") || dragging;
+    setDragging(null);
+    if (!id) return;
+
+    const task = cards.find((t) => t.id === id);
+    if (task) move(task, column);
   }
 
   return (
@@ -59,10 +87,27 @@ export function BoardView({
           a card is an explicit tap-to-choose action instead. */}
       <div className="no-scrollbar -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         {columns.map((column) => {
-          const items = tasks.filter((t) => t.column_id === column.id);
+          const items = cards.filter((t) => t.column_id === column.id);
 
           return (
-            <div key={column.id} className="w-[85vw] shrink-0 snap-start sm:w-72">
+            <div
+              key={column.id}
+              onDragOver={(e) => {
+                // Preventing default is what marks this a valid drop target.
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                if (dragOver !== column.id) setDragOver(column.id);
+              }}
+              onDragLeave={(e) => {
+                // Ignore bubbling from children, or the highlight flickers.
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null);
+              }}
+              onDrop={(e) => handleDrop(column, e)}
+              className={cn(
+                "w-[85vw] shrink-0 snap-start rounded-2xl p-1 transition sm:w-72",
+                dragOver === column.id && "bg-pink-50 ring-2 ring-pink-400 dark:bg-pink-900/20"
+              )}
+            >
               <div className="mb-2 flex items-center justify-between px-1">
                 <p className="text-sm font-semibold">
                   {column.name}
@@ -86,9 +131,33 @@ export function BoardView({
                   const count = commentCounts[task.id] ?? 0;
 
                   return (
-                    <Card key={task.id} className="p-3">
+                    <Card
+                      key={task.id}
+                      draggable={canManage}
+                      onDragStart={(e) => {
+                        setDragging(task.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        // Firefox will not start a drag without payload.
+                        e.dataTransfer.setData("text/plain", task.id);
+                      }}
+                      onDragEnd={() => {
+                        setDragging(null);
+                        setDragOver(null);
+                      }}
+                      className={cn(
+                        "p-3 transition",
+                        canManage && "sm:cursor-grab sm:active:cursor-grabbing",
+                        dragging === task.id && "opacity-40"
+                      )}
+                    >
                       <button onClick={() => setDetail(task)} className="w-full text-left">
                         <div className="flex items-start gap-2">
+                          {canManage && (
+                            <GripVertical
+                              className="mt-0.5 hidden size-3.5 shrink-0 text-[var(--text-muted)] sm:block"
+                              aria-hidden
+                            />
+                          )}
                           <span
                             className={cn(
                               "mt-1.5 size-1.5 shrink-0 rounded-full",
@@ -133,10 +202,12 @@ export function BoardView({
                         </div>
                       </button>
 
+                      {/* Dragging is unusable inside a horizontally
+                          scrolling board on touch, so phones get Move. */}
                       {canManage && columns.length > 1 && (
                         <button
                           onClick={() => setMoving(task)}
-                          className="mt-2 inline-flex items-center gap-1 pl-3.5 text-xs font-medium text-pink-500 hover:underline"
+                          className="mt-2 inline-flex items-center gap-1 pl-3.5 text-xs font-medium text-pink-500 hover:underline sm:hidden"
                         >
                           Move
                           <ChevronRight className="size-3" />
@@ -147,8 +218,15 @@ export function BoardView({
                 })}
 
                 {items.length === 0 && (
-                  <div className="rounded-xl border border-dashed p-6 text-center">
-                    <p className="muted text-xs">Nothing here</p>
+                  <div
+                    className={cn(
+                      "rounded-xl border border-dashed p-6 text-center transition",
+                      dragOver === column.id && "border-pink-400"
+                    )}
+                  >
+                    <p className="muted text-xs">
+                      {dragOver === column.id ? "Drop here" : "Nothing here"}
+                    </p>
                   </div>
                 )}
               </div>

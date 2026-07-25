@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { Plus, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { formatFileSize } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { createExpense } from "./actions";
 import { Button } from "@/components/ui/button";
@@ -129,7 +130,7 @@ export function ExpenseActions({
                 <div className="surface flex items-center gap-3 rounded-xl p-3">
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{file.name}</span>
-                    <span className="muted text-xs">{(file.size / 1024).toFixed(0)} KB</span>
+                    <span className="muted text-xs">{formatFileSize(file.size)}</span>
                   </span>
                   <button
                     type="button"

@@ -1,23 +1,24 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, CheckCircle2, Clock, ListChecks, Plus } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, Clock, ListChecks, Plus, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, SectionTitle } from "@/components/ui/misc";
+import { AllClearIllustration, NoEventsIllustration } from "@/components/ui/illustrations";
 import { EVENT_STATUS, TASK_PRIORITY } from "@/lib/constants";
+import {
+  dayOutlook,
+  EMPTY_STATES,
+  greeting,
+  weeklyMomentum,
+} from "@/lib/encouragement";
 import { cn, daysUntil, formatDate, relativeDay } from "@/lib/utils";
 import type { Task, Event, ApprovalRequest } from "@/lib/types";
+import { DailyQuote } from "./daily-quote";
 
 export const metadata = { title: "Home" };
-
-function greeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -25,10 +26,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-7">
-      <div>
-        <p className="muted text-sm">{greeting()},</p>
-        <h1 className="text-2xl font-semibold tracking-tight">{firstName}</h1>
-      </div>
+      <Header userId={user.id} firstName={firstName} />
 
       <StatsRow userId={user.id} />
 
@@ -37,6 +35,62 @@ export default async function DashboardPage() {
       <WaitingOnMe userId={user.id} />
 
       <UpcomingEvents />
+    </div>
+  );
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+/**
+ * Greeting, then a line that says something true about today rather than a
+ * generic pleasantry, then the team's shared quote.
+ */
+async function Header({ userId, firstName }: { userId: string; firstName: string }) {
+  const supabase = await createClient();
+
+  const now = new Date();
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+  const weekAgo = new Date(now.getTime() - 7 * 86_400_000).toISOString();
+
+  const [open, overdue, dueToday, approvals, closedThisWeek] = await Promise.all([
+    supabase.from("tasks").select("id", { count: "exact", head: true })
+      .eq("assignee_id", userId).not("status", "in", "(done,cancelled)"),
+    supabase.from("tasks").select("id", { count: "exact", head: true })
+      .eq("assignee_id", userId).not("status", "in", "(done,cancelled)")
+      .lt("due_at", now.toISOString()),
+    supabase.from("tasks").select("id", { count: "exact", head: true })
+      .eq("assignee_id", userId).not("status", "in", "(done,cancelled)")
+      .gte("due_at", now.toISOString()).lte("due_at", endOfToday.toISOString()),
+    supabase.from("approval_requests").select("id", { count: "exact", head: true })
+      .eq("assigned_to", userId).eq("status", "pending"),
+    supabase.from("tasks").select("id", { count: "exact", head: true })
+      .eq("completed_by", userId).eq("status", "done").gte("completed_at", weekAgo),
+  ]);
+
+  const outlook = dayOutlook({
+    open: open.count ?? 0,
+    overdue: overdue.count ?? 0,
+    dueToday: dueToday.count ?? 0,
+    approvals: approvals.count ?? 0,
+  });
+  const momentum = weeklyMomentum(closedThisWeek.count ?? 0);
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="muted text-sm">{greeting()},</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{firstName}</h1>
+        <p className="mt-1.5 text-sm">{outlook}</p>
+        {momentum && (
+          <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-pink-500">
+            <Sparkles className="size-3.5" />
+            {momentum}
+          </p>
+        )}
+      </div>
+
+      <DailyQuote />
     </div>
   );
 }
@@ -131,9 +185,9 @@ async function MyWork({ userId }: { userId: string }) {
       {tasks.length === 0 ? (
         <Card>
           <EmptyState
-            icon={<CheckCircle2 className="size-6" />}
-            title="Nothing on your plate"
-            description="No open tasks assigned to you. Enjoy it while it lasts."
+            illustration={<AllClearIllustration className="w-32" />}
+            title={EMPTY_STATES.noOpenWork.title}
+            description={EMPTY_STATES.noOpenWork.body}
           />
         </Card>
       ) : (
@@ -264,9 +318,9 @@ async function UpcomingEvents() {
       {events.length === 0 ? (
         <Card>
           <EmptyState
-            icon={<CalendarDays className="size-6" />}
-            title="No events scheduled"
-            description="Create an event and Nexis OS will build the full checklist for you."
+            illustration={<NoEventsIllustration className="w-36" />}
+            title={EMPTY_STATES.noEvents.title}
+            description={EMPTY_STATES.noEvents.body}
             action={
               <Link href="/events/new">
                 <Button>

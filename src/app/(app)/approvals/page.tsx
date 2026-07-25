@@ -1,8 +1,9 @@
-import { CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser, isManager } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/misc";
+import { NoApprovalsIllustration } from "@/components/ui/illustrations";
+import { EMPTY_STATES } from "@/lib/encouragement";
 import type { ApprovalRequest, Creative, Expense, Profile, Script } from "@/lib/types";
 import { ApprovalCard } from "./approval-card";
 
@@ -89,17 +90,17 @@ async function ApprovalList({ filter }: { filter: string }) {
     return (
       <Card>
         <EmptyState
-          icon={<CheckCircle2 className="size-6" />}
+          illustration={<NoApprovalsIllustration className="w-36" />}
           title={
             filter === "mine"
-              ? "Nothing waiting on you"
+              ? EMPTY_STATES.noApprovals.title
               : filter === "submitted"
                 ? "You haven't submitted anything"
                 : "Nothing here yet"
           }
           description={
             filter === "mine"
-              ? "When a teammate sends a creative or script for approval, it lands here."
+              ? EMPTY_STATES.noApprovals.body
               : "Creatives and scripts sent for approval show up in this list."
           }
         />
