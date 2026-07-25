@@ -1,26 +1,157 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Nexis OS design tokens
+   Palette lifted from the Nexis brand system so the OS looks like Nexis:
+   pink #EF3A5D on ink #111111, cream for warm surfaces, lemon used sparingly.
+   ========================================================================== */
+
+@theme {
+  /* Brand */
+  --color-pink-50:  #fff1f4;
+  --color-pink-100: #ffe0e7;
+  --color-pink-200: #ffc6d3;
+  --color-pink-300: #ff9db3;
+  --color-pink-400: #fb6789;
+  --color-pink-500: #ef3a5d;
+  --color-pink-600: #ff0049;
+  --color-pink-700: #a3243d;
+  --color-pink-800: #6d1a2a;
+  --color-pink-900: #410f1c;
+
+  --color-ink-50:  #f6f6f7;
+  --color-ink-100: #e7e7e9;
+  --color-ink-200: #cfcfcf;
+  --color-ink-300: #a1a1a4;
+  --color-ink-400: #616161;
+  --color-ink-500: #393939;
+  --color-ink-600: #232323;
+  --color-ink-700: #161616;
+  --color-ink-800: #111111;
+  --color-ink-900: #0a0a0a;
+
+  --color-cream: #f7f0e7;
+  --color-cream-soft: #fffbf6;
+  --color-lemon: #d5fe00;
+
+  /* Semantic */
+  --color-brand: #ef3a5d;
+  --color-brand-strong: #ff0049;
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-nexis: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Surface tokens. Plain CSS vars (not @theme) so they can flip between light
+   and dark without duplicating the whole scale.
+   -------------------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f7f7f8;
+  --border-subtle: #e9e9ec;
+  --text-strong: #111111;
+  --text-muted: #6b6b70;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --surface: #0d0d0f;
+  --surface-raised: #161618;
+  --surface-sunken: #08080a;
+  --border-subtle: #26262b;
+  --text-strong: #f4f4f5;
+  --text-muted: #9a9aa1;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--border-subtle);
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: var(--surface-sunken);
+    color: var(--text-strong);
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background: var(--color-pink-500);
+    color: #fff;
+  }
+
+  /* Inputs below 16px make iOS Safari zoom on focus. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  @media (min-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 0.875rem;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .surface {
+    background: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .muted {
+    color: var(--text-muted);
+  }
+
+  /* Horizontal scrollers (month strips, status filters) without a scrollbar. */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--surface-sunken) 25%,
+      var(--border-subtle) 37%,
+      var(--surface-sunken) 63%
+    );
+    background-size: 400% 100%;
+    animation: nexis-shimmer 1.4s ease infinite;
+  }
+}
+
+@keyframes nexis-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

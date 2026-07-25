@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# --- Nexis OS: secrets. NEVER commit. ---
+supabase.txt
+*secret*.txt
+*credentials*.txt
+.env
+.env.local
+.env.*.local
+
+# but the template SHOULD be committed
+!.env.example
