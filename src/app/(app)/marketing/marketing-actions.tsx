@@ -73,7 +73,6 @@ export function MarketingActions({
       <CreativeSheet
         open={open === "creative"}
         onClose={() => setOpen(null)}
-        departments={departments}
         approvers={approvers}
         events={events}
         campaigns={campaigns}
@@ -240,7 +239,6 @@ function CampaignSheet({
 function CreativeSheet({
   open,
   onClose,
-  departments,
   approvers,
   events,
   campaigns,
@@ -248,7 +246,6 @@ function CreativeSheet({
 }: {
   open: boolean;
   onClose: () => void;
-  departments: Option[];
   approvers: Approver[];
   events: Option[];
   campaigns: Option[];

@@ -15,7 +15,13 @@ export const metadata: Metadata = {
     default: "Nexis OS",
     template: "%s · Nexis OS",
   },
-  description: "The operating system for the Nexis team.",
+  description: "The operating system for the NEXIS School of Business team.",
+  openGraph: {
+    title: "Nexis OS",
+    description: "The operating system for the NEXIS School of Business team.",
+    images: ["/brand/logo.png"],
+    type: "website",
+  },
   appleWebApp: {
     capable: true,
     title: "Nexis OS",

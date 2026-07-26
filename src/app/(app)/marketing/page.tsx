@@ -1,4 +1,3 @@
-import { Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { Card } from "@/components/ui/card";

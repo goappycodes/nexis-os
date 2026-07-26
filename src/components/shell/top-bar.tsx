@@ -11,6 +11,7 @@ import { ROLE_LABEL } from "@/lib/constants";
 import type { AppRole } from "@/lib/types";
 import { ADMIN_NAV, SECONDARY_NAV, visibleNav } from "./nav-config";
 import { NavIcon } from "./nav-icon";
+import { NexisLogo } from "./logo";
 
 export function TopBar({
   name,
@@ -39,10 +40,9 @@ export function TopBar({
         <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
           {/* Wordmark only on mobile — the sidebar carries it on desktop. */}
           <Link href="/" className="flex items-center gap-2 lg:hidden">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-pink-500 text-sm font-bold text-white">
-              N
-            </span>
-            <span className="text-[15px] font-semibold tracking-tight">Nexis OS</span>
+            <NexisLogo className="h-6 dark:hidden" priority />
+            <NexisLogo variant="white" className="hidden h-6 dark:block" priority />
+            <span className="muted text-xs font-medium tracking-tight">OS</span>
           </Link>
 
           <div className="ml-auto flex items-center gap-1">

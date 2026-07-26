@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { LoginForm } from "./login-form";
+import { NexisLogo } from "@/components/shell/logo";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -16,11 +17,9 @@ export default async function LoginPage({
       {/* Brand panel. On desktop it sits beside the form; on mobile, above it. */}
       <div className="flex flex-1 flex-col justify-center px-6 py-12 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="mb-8">
-          <div className="mb-6 inline-flex items-center gap-2.5">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-pink-500 text-lg font-bold">
-              N
-            </span>
-            <span className="text-xl font-semibold tracking-tight">Nexis OS</span>
+          <div className="mb-7 flex items-center gap-3">
+            <NexisLogo variant="white" className="h-9" priority />
+            <span className="text-sm font-medium text-ink-300">OS</span>
           </div>
           <h1 className="text-3xl font-semibold leading-tight">
             Welcome back.

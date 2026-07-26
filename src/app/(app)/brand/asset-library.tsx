@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   Download,
   FileText,
@@ -13,7 +13,6 @@ import {
   Type,
 } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
 import { deleteBrandAsset, getAssetDownloadUrl, togglePinned } from "./actions";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -44,12 +43,15 @@ function categoryIcon(category: BrandAssetCategory) {
 
 export function AssetLibrary({
   assets,
+  signedUrls,
   category,
   query,
   canManage,
   currentUserId,
 }: {
   assets: BrandAsset[];
+  /** Thumbnail URLs, signed server-side in one batch. */
+  signedUrls: Record<string, string>;
   category: string;
   query: string;
   canManage: boolean;
@@ -125,6 +127,7 @@ export function AssetLibrary({
             <AssetCard
               key={asset.id}
               asset={asset}
+              previewUrl={signedUrls[asset.file_path] ?? null}
               canManage={canManage}
               isOwn={asset.uploaded_by === currentUserId}
             />
@@ -162,33 +165,17 @@ function FilterChip({
 
 function AssetCard({
   asset,
+  previewUrl,
   canManage,
   isOwn,
 }: {
   asset: BrandAsset;
+  previewUrl: string | null;
   canManage: boolean;
   isOwn: boolean;
 }) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const Icon = categoryIcon(asset.category);
-  const isImage = asset.mime_type?.startsWith("image/") ?? false;
-
-  useEffect(() => {
-    if (!isImage) return;
-    let cancelled = false;
-
-    createClient()
-      .storage.from("brand")
-      .createSignedUrl(asset.file_path, 3600)
-      .then(({ data }) => {
-        if (!cancelled && data?.signedUrl) setPreviewUrl(data.signedUrl);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [asset.file_path, isImage]);
 
   function download() {
     startTransition(async () => {

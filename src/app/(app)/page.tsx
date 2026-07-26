@@ -1,21 +1,20 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, CheckCircle2, Clock, ListChecks, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, Clock, ListChecks, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, SectionTitle } from "@/components/ui/misc";
-import { AllClearIllustration, NoEventsIllustration } from "@/components/ui/illustrations";
-import { EVENT_STATUS, TASK_PRIORITY } from "@/lib/constants";
+import { AllClearIllustration } from "@/components/ui/illustrations";
+import { TASK_PRIORITY } from "@/lib/constants";
 import {
   dayOutlook,
   EMPTY_STATES,
   greeting,
   weeklyMomentum,
 } from "@/lib/encouragement";
-import { cn, daysUntil, formatDate, relativeDay } from "@/lib/utils";
-import type { Task, Event, ApprovalRequest } from "@/lib/types";
+import { cn, daysUntil, relativeDay } from "@/lib/utils";
+import type { Task, ApprovalRequest } from "@/lib/types";
 import { DailyQuote } from "./daily-quote";
 import { UpNext } from "./up-next";
 

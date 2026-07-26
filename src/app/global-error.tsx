@@ -35,23 +35,16 @@ export default function GlobalError({
         }}
       >
         <div style={{ maxWidth: 420, textAlign: "center" }}>
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              background: "#ef3a5d",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 700,
-              fontSize: 20,
-              margin: "0 auto 1.25rem",
-            }}
-          >
-            N
-          </div>
+          {/* Plain img, not next/image: this boundary renders when the app
+              itself has failed, so it must not depend on the framework. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/mark.png"
+            alt="NEXIS"
+            width={44}
+            height={44}
+            style={{ display: "block", margin: "0 auto 1.25rem" }}
+          />
 
           <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 0.5rem" }}>
             Nexis OS hit a problem

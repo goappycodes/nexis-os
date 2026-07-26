@@ -1,4 +1,5 @@
 import { requireUser, isManager } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { getBrandAssets, getBrandTokens, getDepartments } from "@/lib/reference-data";
 import { BrandKit } from "./brand-kit";
 import { AssetLibrary } from "./asset-library";
@@ -22,6 +23,24 @@ export default async function BrandPage({
     getDepartments(),
   ]);
 
+  // Sign every thumbnail in a single call. Doing this per card in the browser
+  // meant ~48 separate round trips to Supabase before the grid had any images.
+  // Signed URLs expire, so they are generated per request rather than cached
+  // alongside the asset rows.
+  const supabase = await createClient();
+  const previewable = assets.filter((a) => a.mime_type?.startsWith("image/"));
+  const signedUrls: Record<string, string> = {};
+
+  if (previewable.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("brand")
+      .createSignedUrls(previewable.map((a) => a.file_path), 3600);
+
+    for (const entry of signed ?? []) {
+      if (entry.path && entry.signedUrl) signedUrls[entry.path] = entry.signedUrl;
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-3">
@@ -42,6 +61,7 @@ export default async function BrandPage({
       {tab === "assets" ? (
         <AssetLibrary
           assets={assets}
+          signedUrls={signedUrls}
           category={category}
           query={q}
           canManage={isManager(user)}

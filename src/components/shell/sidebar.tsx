@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV, PRIMARY_NAV, SECONDARY_NAV, visibleNav } from "./nav-config";
 import { NavIcon } from "./nav-icon";
+import { NexisLogo } from "./logo";
 
 /** Desktop sidebar. Hidden below `lg`, where BottomNav takes over. */
 export function Sidebar({
@@ -56,10 +57,9 @@ export function Sidebar({
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r bg-[var(--surface-raised)] lg:flex">
       <Link href="/" className="flex items-center gap-2.5 px-5 py-5">
-        <span className="flex size-9 items-center justify-center rounded-xl bg-pink-500 text-base font-bold text-white">
-          N
-        </span>
-        <span className="text-[15px] font-semibold tracking-tight">Nexis OS</span>
+        <NexisLogo className="h-7 dark:hidden" priority />
+        <NexisLogo variant="white" className="hidden h-7 dark:block" priority />
+        <span className="muted text-[13px] font-medium tracking-tight">OS</span>
       </Link>
 
       <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label="Main">

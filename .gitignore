@@ -50,3 +50,6 @@ supabase.txt
 
 # but the template SHOULD be committed
 !.env.example
+
+# staging dir for scripts/import-wp-media.mjs
+.media-staging/
