@@ -26,6 +26,7 @@ import {
   Truck,
   UserCog,
   Users,
+  UsersRound,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -63,6 +64,7 @@ const ICONS: Record<string, LucideIcon> = {
   truck: Truck,
   "user-cog": UserCog,
   users: Users,
+  "users-round": UsersRound,
   wallet: Wallet,
 };
 

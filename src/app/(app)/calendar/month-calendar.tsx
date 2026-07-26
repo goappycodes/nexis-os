@@ -3,30 +3,32 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, ChevronLeft, ChevronRight, ListChecks, Megaphone } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ListChecks,
+  Megaphone,
+  Users,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Sheet } from "@/components/ui/sheet";
 import { cn, formatDate } from "@/lib/utils";
 
-export type CalendarEntry = {
-  kind: "event" | "task" | "campaign";
-  id: string;
-  /** ISO timestamp or yyyy-mm-dd. */
-  date: string;
-  /** Campaigns can span days; everything else is a point in time. */
-  endDate?: string;
-  title: string;
-  href: string;
-  meta?: string;
-  status?: string;
-  priority?: string;
-  mine?: boolean;
-};
+import type { AgendaEntry } from "@/lib/agenda";
 
+export type CalendarEntry = AgendaEntry;
+
+/** Colour and icon per source, shared by the grid, legend and day sheet. */
 const KIND_STYLE = {
-  event: { dot: "bg-pink-500", chip: "bg-pink-100 text-pink-800 dark:bg-pink-900/60 dark:text-pink-100", icon: CalendarDays, label: "Events" },
-  task: { dot: "bg-blue-500", chip: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200", icon: ListChecks, label: "Deadlines" },
-  campaign: { dot: "bg-lemon", chip: "bg-lime-100 text-lime-900 dark:bg-lime-950 dark:text-lime-200", icon: Megaphone, label: "Marketing" },
+  event:    { dot: "bg-pink-500",   chip: "bg-pink-100 text-pink-800 dark:bg-pink-900/60 dark:text-pink-100",   icon: CalendarDays,  label: "Events" },
+  meeting:  { dot: "bg-violet-500", chip: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200", icon: Users,      label: "Meetings" },
+  task:     { dot: "bg-blue-500",   chip: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",     icon: ListChecks,    label: "Deadlines" },
+  campaign: { dot: "bg-lemon",      chip: "bg-lime-100 text-lime-900 dark:bg-lime-950 dark:text-lime-200",     icon: Megaphone,     label: "Marketing" },
+  approval: { dot: "bg-amber-500",  chip: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200", icon: CheckCircle2,  label: "Approvals" },
+  reminder: { dot: "bg-teal-500",   chip: "bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200",     icon: Bell,          label: "Reminders" },
 } as const;
 
 const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -42,23 +44,23 @@ export function MonthCalendar({
   month,
   entries,
   show,
-  selectedDay,
+  onlyMine = false,
 }: {
   month: string;
   entries: CalendarEntry[];
   show: string;
-  selectedDay?: string;
+  onlyMine?: boolean;
 }) {
   const router = useRouter();
-  const [openDay, setOpenDay] = useState<string | null>(selectedDay ?? null);
+  const [openDay, setOpenDay] = useState<string | null>(null);
 
   const [year, monthNumber] = month.split("-").map(Number);
-  const first = new Date(year, monthNumber - 1, 1);
+  // Memoised so the cells grid below actually caches instead of rebuilding
+  // 42 Date objects on every render.
+  const first = useMemo(() => new Date(year, monthNumber - 1, 1), [year, monthNumber]);
 
-  const visible = useMemo(
-    () => (show === "all" ? entries : entries.filter((e) => e.kind === show)),
-    [entries, show]
-  );
+  // The server already applied the kind and "mine" filters.
+  const visible = entries;
 
   /** Every entry keyed by the day it falls on, campaigns filling their range. */
   const byDay = useMemo(() => {
@@ -113,7 +115,7 @@ export function MonthCalendar({
       {/* Month navigation */}
       <div className="flex items-center justify-between gap-3">
         <Link
-          href={`/calendar?month=${step(-1)}&show=${show}`}
+          href={`/calendar?month=${step(-1)}&show=${show}${onlyMine ? "&mine=1" : ""}`}
           scroll={false}
           aria-label="Previous month"
           className="surface flex size-9 items-center justify-center rounded-xl hover:border-pink-300"
@@ -122,7 +124,7 @@ export function MonthCalendar({
         </Link>
         <p className="text-sm font-semibold">{monthLabel}</p>
         <Link
-          href={`/calendar?month=${step(1)}&show=${show}`}
+          href={`/calendar?month=${step(1)}&show=${show}${onlyMine ? "&mine=1" : ""}`}
           scroll={false}
           aria-label="Next month"
           className="surface flex size-9 items-center justify-center rounded-xl hover:border-pink-300"
@@ -133,10 +135,26 @@ export function MonthCalendar({
 
       {/* What to show */}
       <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <FilterChip label="Everything" value="all" active={show} month={month} />
-        <FilterChip label="Events" value="event" active={show} month={month} />
-        <FilterChip label="Deadlines" value="task" active={show} month={month} />
-        <FilterChip label="Marketing" value="campaign" active={show} month={month} />
+        <FilterChip label="Everything" value="all" active={show} month={month} mine={onlyMine} />
+        <FilterChip label="Events" value="event" active={show} month={month} mine={onlyMine} />
+        <FilterChip label="Meetings" value="meeting" active={show} month={month} mine={onlyMine} />
+        <FilterChip label="Deadlines" value="task" active={show} month={month} mine={onlyMine} />
+        <FilterChip label="Marketing" value="campaign" active={show} month={month} mine={onlyMine} />
+        <FilterChip label="Approvals" value="approval" active={show} month={month} mine={onlyMine} />
+        <FilterChip label="Reminders" value="reminder" active={show} month={month} mine={onlyMine} />
+
+        <Link
+          href={`/calendar?month=${month}&show=${show}${onlyMine ? "" : "&mine=1"}`}
+          scroll={false}
+          className={cn(
+            "ml-1 shrink-0 rounded-full px-4 py-2 text-xs font-medium transition",
+            onlyMine
+              ? "bg-pink-500 text-white"
+              : "surface hover:border-pink-300"
+          )}
+        >
+          Just mine
+        </Link>
       </div>
 
       {/* Grid */}
@@ -230,7 +248,9 @@ export function MonthCalendar({
         open={openDay !== null}
         onClose={() => {
           setOpenDay(null);
-          router.replace(`/calendar?month=${month}&show=${show}`, { scroll: false });
+          router.replace(`/calendar?month=${month}&show=${show}${onlyMine ? "&mine=1" : ""}`, {
+            scroll: false,
+          });
         }}
         title={openDay ? formatDate(new Date(`${openDay}T12:00:00`)) : undefined}
         description={
@@ -281,16 +301,18 @@ function FilterChip({
   value,
   active,
   month,
+  mine,
 }: {
   label: string;
   value: string;
   active: string;
   month: string;
+  mine: boolean;
 }) {
   const isActive = active === value;
   return (
     <Link
-      href={`/calendar?month=${month}&show=${value}`}
+      href={`/calendar?month=${month}&show=${value}${mine ? "&mine=1" : ""}`}
       scroll={false}
       className={cn(
         "shrink-0 rounded-full px-4 py-2 text-xs font-medium transition",

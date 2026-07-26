@@ -53,6 +53,17 @@ export const TEMPLATES = [
     ],
   },
   {
+    name: "nexisos_meeting_invite",
+    category: "UTILITY",
+    components: [
+      body(
+        "Hi {{1}}, you have been invited to a meeting on Nexis OS.\n\n*{{2}}*\nWhen: {{3}}\nWhere: {{4}}\nCalled by: {{5}}\n\nOpen Nexis OS to accept or decline.",
+        ["Ritesh", "Marketing weekly review", "28 Jul 2026, 11:00 am", "Apex Hall", "Ananya"]
+      ),
+      FOOTER,
+    ],
+  },
+  {
     // Escalation for overdue or urgent-priority work. Kept visually distinct
     // from the routine reminder so it does not blend into the noise.
     name: "nexisos_task_urgent",

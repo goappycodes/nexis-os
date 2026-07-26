@@ -23,6 +23,7 @@ export const TEMPLATES = {
   approvalPending: "nexisos_approval_pending",
   approvalDecision: "nexisos_approval_decision",
   eventCountdown: "nexisos_event_countdown",
+  meetingInvite: "nexisos_meeting_invite",
 } as const;
 
 export type ScheduleInput = {

@@ -17,6 +17,7 @@ import {
 import { cn, daysUntil, formatDate, relativeDay } from "@/lib/utils";
 import type { Task, Event, ApprovalRequest } from "@/lib/types";
 import { DailyQuote } from "./daily-quote";
+import { UpNext } from "./up-next";
 
 export const metadata = { title: "Home" };
 
@@ -30,11 +31,13 @@ export default async function DashboardPage() {
 
       <StatsRow userId={user.id} />
 
+      {/* One merged agenda: events, meetings, deadlines, campaigns,
+          approvals and reminders in a single place. */}
+      <UpNext userId={user.id} />
+
       <MyWork userId={user.id} />
 
       <WaitingOnMe userId={user.id} />
-
-      <UpcomingEvents />
     </div>
   );
 }
@@ -285,85 +288,3 @@ async function WaitingOnMe({ userId }: { userId: string }) {
     </section>
   );
 }
-
-/* ── Upcoming events ──────────────────────────────────────────────────────── */
-
-async function UpcomingEvents() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("events")
-    .select("id, name, slug, starts_at, venue, status")
-    .gte("starts_at", new Date().toISOString())
-    .not("status", "in", "(cancelled,completed)")
-    .order("starts_at", { ascending: true })
-    .limit(4);
-
-  const events = (data ?? []) as unknown as Pick<
-    Event,
-    "id" | "name" | "slug" | "starts_at" | "venue" | "status"
-  >[];
-
-  return (
-    <section>
-      <SectionTitle
-        action={
-          <Link href="/events" className="text-xs font-medium text-pink-500 hover:underline">
-            View all
-          </Link>
-        }
-      >
-        Upcoming events
-      </SectionTitle>
-
-      {events.length === 0 ? (
-        <Card>
-          <EmptyState
-            illustration={<NoEventsIllustration className="w-36" />}
-            title={EMPTY_STATES.noEvents.title}
-            description={EMPTY_STATES.noEvents.body}
-            action={
-              <Link href="/events/new">
-                <Button>
-                  <Plus className="size-4" />
-                  New event
-                </Button>
-              </Link>
-            }
-          />
-        </Card>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {events.map((event) => {
-            const days = daysUntil(event.starts_at);
-            const meta = EVENT_STATUS[event.status];
-            return (
-              <Link key={event.id} href={`/events/${event.slug}`}>
-                <Card className="h-full p-4 transition hover:border-pink-300">
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <Badge className={meta.className} dot={meta.dot}>
-                      {meta.label}
-                    </Badge>
-                    <span
-                      className={cn(
-                        "shrink-0 text-xs font-semibold",
-                        days <= 3 ? "text-pink-500" : "muted"
-                      )}
-                    >
-                      {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days} days`}
-                    </span>
-                  </div>
-                  <p className="font-medium leading-tight">{event.name}</p>
-                  <p className="muted mt-1.5 text-xs">
-                    {formatDate(event.starts_at)}
-                    {event.venue ? ` · ${event.venue}` : ""}
-                  </p>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
-}
-

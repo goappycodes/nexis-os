@@ -126,6 +126,7 @@ export type Task = {
   column_id: string | null;
   event_id: string | null;
   campaign_id: string | null;
+  meeting_id: string | null;
   category: WorkCategory;
   status: TaskStatus;
   priority: TaskPriority;
@@ -313,6 +314,41 @@ export type Expense = {
   updated_at: string;
 };
 
+export type MeetingStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
+
+export type AttendeeStatus =
+  | "invited" | "accepted" | "declined" | "tentative" | "attended" | "absent";
+
+export type Meeting = {
+  id: string;
+  title: string;
+  agenda: string | null;
+  status: MeetingStatus;
+  starts_at: string;
+  ends_at: string | null;
+  location: string | null;
+  meeting_link: string | null;
+  department_id: string | null;
+  organiser_id: string | null;
+  event_id: string | null;
+  minutes: string | null;
+  decisions: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MeetingAttendee = {
+  meeting_id: string;
+  user_id: string;
+  status: AttendeeStatus;
+  is_organiser: boolean;
+  is_optional: boolean;
+  responded_at: string | null;
+  note: string | null;
+  created_at: string;
+};
+
 export type BrandTokenKind = "color" | "font" | "rule";
 
 export type BrandAssetCategory =
@@ -408,6 +444,8 @@ export type Database = {
       notifications: TableDef<Notification, "user_id" | "title">;
       reminders: TableDef<Reminder, "send_at">;
       expenses: TableDef<Expense, "title" | "amount">;
+      meetings: TableDef<Meeting, "title" | "starts_at">;
+      meeting_attendees: TableDef<MeetingAttendee, "meeting_id" | "user_id">;
       brand_tokens: TableDef<BrandToken, "kind" | "name">;
       brand_assets: TableDef<BrandAsset, "name" | "file_path">;
       message_log: TableDef<MessageLog, "channel" | "recipient" | "status">;
@@ -433,6 +471,8 @@ export type Database = {
     };
     Enums: {
       app_role: AppRole;
+      meeting_status: MeetingStatus;
+      attendee_status: AttendeeStatus;
       event_status: EventStatus;
       task_status: TaskStatus;
       task_priority: TaskPriority;
