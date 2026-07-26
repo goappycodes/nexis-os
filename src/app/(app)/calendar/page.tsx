@@ -1,12 +1,9 @@
 import { requireUser } from "@/lib/auth";
 import { getAgenda, type AgendaKind } from "@/lib/agenda";
+import { parseMonthKey } from "@/lib/month";
 import { MonthCalendar } from "./month-calendar";
 
 export const metadata = { title: "Calendar" };
-
-function monthKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
 
 const ALL_KINDS: AgendaKind[] = [
   "event",
@@ -23,11 +20,12 @@ export default async function CalendarPage({
   searchParams: Promise<{ month?: string; show?: string; mine?: string }>;
 }) {
   const { month, show = "all", mine } = await searchParams;
-  const active = month ?? monthKey(new Date());
+  // Anything malformed falls back to the current month rather than producing
+  // an Invalid Date and taking the page down.
+  const { key: active, year, month: m } = parseMonthKey(month);
   const onlyMine = mine === "1";
 
   const user = await requireUser();
-  const [year, m] = active.split("-").map(Number);
 
   // Pad the window by a week so entries in the greyed-out neighbouring days at
   // the edges of the grid still appear.
@@ -39,13 +37,21 @@ export default async function CalendarPage({
     to,
     userId: user.id,
     onlyMine,
-    kinds: show === "all" ? ALL_KINDS : [show as AgendaKind],
+    kinds:
+      show === "all" || !ALL_KINDS.includes(show as AgendaKind)
+        ? ALL_KINDS
+        : [show as AgendaKind],
   });
 
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
-      <MonthCalendar month={active} entries={entries} show={show} onlyMine={onlyMine} />
+      <MonthCalendar
+        month={active}
+        entries={entries}
+        show={ALL_KINDS.includes(show as AgendaKind) ? show : "all"}
+        onlyMine={onlyMine}
+      />
     </div>
   );
 }

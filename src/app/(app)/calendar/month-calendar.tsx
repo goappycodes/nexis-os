@@ -12,10 +12,12 @@ import {
   ListChecks,
   Megaphone,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Sheet } from "@/components/ui/sheet";
 import { cn, formatDate } from "@/lib/utils";
+import { parseMonthKey } from "@/lib/month";
 
 import type { AgendaEntry } from "@/lib/agenda";
 
@@ -30,6 +32,25 @@ const KIND_STYLE = {
   approval: { dot: "bg-amber-500",  chip: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200", icon: CheckCircle2,  label: "Approvals" },
   reminder: { dot: "bg-teal-500",   chip: "bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200",     icon: Bell,          label: "Reminders" },
 } as const;
+
+type KindStyle = {
+  dot: string;
+  chip: string;
+  icon: LucideIcon;
+  label: string;
+};
+
+const FALLBACK_STYLE: KindStyle = {
+  dot: "bg-ink-400",
+  chip: "bg-ink-100 text-ink-700 dark:bg-ink-700 dark:text-ink-100",
+  icon: CalendarDays,
+  label: "Other",
+};
+
+/** Never returns undefined, so a new agenda kind cannot crash the grid. */
+function styleFor(kind: string): KindStyle {
+  return (KIND_STYLE as Record<string, KindStyle>)[kind] ?? FALLBACK_STYLE;
+}
 
 const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -54,7 +75,9 @@ export function MonthCalendar({
   const router = useRouter();
   const [openDay, setOpenDay] = useState<string | null>(null);
 
-  const [year, monthNumber] = month.split("-").map(Number);
+  // Parsed defensively here as well as on the server: this component must
+  // never be the thing that turns a bad URL into a blank screen.
+  const { year, month: monthNumber } = parseMonthKey(month);
   // Memoised so the cells grid below actually caches instead of rebuilding
   // 42 Date objects on every render.
   const first = useMemo(() => new Date(year, monthNumber - 1, 1), [year, monthNumber]);
@@ -199,7 +222,7 @@ export function MonthCalendar({
                   {shown.map((entry, i) => (
                     <span
                       key={`${entry.kind}-${entry.id}-${i}`}
-                      className={cn("size-1.5 rounded-full", KIND_STYLE[entry.kind].dot)}
+                      className={cn("size-1.5 rounded-full", styleFor(entry.kind).dot)}
                     />
                   ))}
                 </span>
@@ -210,7 +233,7 @@ export function MonthCalendar({
                       key={`${entry.kind}-${entry.id}-${i}`}
                       className={cn(
                         "truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight",
-                        KIND_STYLE[entry.kind].chip
+                        styleFor(entry.kind).chip
                       )}
                     >
                       {entry.title}
@@ -259,7 +282,7 @@ export function MonthCalendar({
       >
         <ul className="space-y-2">
           {dayEntries.map((entry, i) => {
-            const style = KIND_STYLE[entry.kind];
+            const style = styleFor(entry.kind);
             const Icon = style.icon;
             return (
               <li key={`${entry.kind}-${entry.id}-${i}`}>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { parseMonthKey } from "@/lib/month";
 
 /**
  * Horizontally scrollable month picker.
@@ -24,7 +25,7 @@ export function MonthStripBase({
   const activeRef = useRef<HTMLAnchorElement>(null);
 
   const months = useMemo(() => {
-    const [year, month] = active.split("-").map(Number);
+    const { year, month } = parseMonthKey(active);
     const anchor = new Date(year, month - 1, 1);
     const list: { key: string; label: string; year: number }[] = [];
 
